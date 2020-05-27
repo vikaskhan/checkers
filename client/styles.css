@@ -1,0 +1,16 @@
+
+body {
+    background-color: gray;
+}
+h1{
+    text-align: center;
+    margin: 1in;
+    word-wrap: 5in;
+}
+.wrapper {
+    text-align: center;
+}
+.play {
+    background-color: rgb(117, 145, 189);
+    font-size: 32px;
+}
