@@ -1,2 +1,2 @@
-# checkers
-Online Checkers Game With Friends
+# MonopolyDeal
+Online Monopoly Game With Friends
