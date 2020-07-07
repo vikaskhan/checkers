@@ -1,2 +1,2 @@
 # MonopolyDeal
-Online Monopoly Game With Friends
+Online Monopoly Deal Game With Friends
