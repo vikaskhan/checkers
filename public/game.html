@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monopoly Deal</title>
+    <script src="/socket.io/socket.io.js"></script>
+    
+    </script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="start_screen">
+        <button onclick="enterLobbyAsLeader()">Create New Lobby</button>
+    </div>
+    <div class="lobby">
+        <input type="text" readonly="true" class="game_link" id="game_link">
+        <button onclick="copyID()">Copy text</button>
+        <button class="startGameButton" disabled="true" onclick="startGame()">Start Game</button>
+    </div>
+    <div class="game">
+        <input type="text" class="debug_text" id="debug_text">
+    </div>
+</body>
+<script type="text/javascript" src="behavior.js"></script>
+</html>
+
+
+<script>
+    document.getElementsByClassName('debug_text')[0].onkeydown = function(event) {
+        if (event.keyCode == 13) {
+            var val = document.getElementsByClassName("debug_text")[0].value;
+            if (val == "draw") {
+                drawCards(); 
+            }
+            
+        }
+        
+    }
+</script>

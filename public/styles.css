@@ -14,3 +14,9 @@ h1{
     background-color: rgb(117, 145, 189);
     font-size: 32px;
 }
+.lobby {
+    display: none;
+}
+.game {
+    display: none; 
+}
