@@ -4,8 +4,6 @@ var gameID;
 var playerID; 
 var players = {}; 
 
-
-
 function initialize() {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
@@ -19,7 +17,6 @@ function initialize() {
 function startGame() {
     socket.emit("startGame", gameID);
 }
-
 
 socket.on("startGame", (msg) => {
     console.log("Game is Starting");
@@ -87,21 +84,42 @@ socket.on("removePlayer", (msg) => {
 })
 
 function drawCards() {
-    socket.emit("draw", "", (msg) => {
-        console.log("draw 2"); 
-        
-    });
+    socket.emit("drawCards", ""); 
 }
 
+function makeMove(move) {
+    var txt = move.split(" "); 
+    var msg = {
+        "action" : txt[0], 
+        "cardName" : txt[1],
+        "cardType" : txt[2], 
+    }
+    if (txt.length >= 4) {
+        msg["propertySetSource"] = txt[2]; 
+    }
+    if (txt.length >= 5) {
+        msg["propertySetDestination"] = txt[3]; 
+    }
+    socket.emit("makeMove", move) => {
+        
+    };
+}
+
+//will trigger draw card animation and show card in hand
 socket.on("youDrawCard", (msg) => {
-    card = msg; 
-    console.log("drawing card:" + card); 
-    players[playerID]["numCardsInHand"]++; 
-    players[playerID]["cardsInHand"].push(card); 
+    cards = msg; 
+    for (var i = 0; i < cards.length; i++) {
+        console.log("drawing card:" + card); 
+        players[playerID]["numCardsInHand"]++; 
+        players[playerID]["cardsInHand"].push(card); 
+    }
 })
 
+//will trigger draw card animation
 socket.on("playerDrawCard", (msg) => {
-    console.log(msg + " drew a card"); 
+    var player = msg["player"]; 
+    var numOfCards = msg["numOfCards"]; 
+    console.log(player + " drew " + numOfCards + " card(s)"); 
 })
 
 function enterLobbyDisplay() {
