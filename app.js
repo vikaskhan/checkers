@@ -19,13 +19,45 @@ function newID() {
     return Math.random().toString(36).substr(2, 9);
 }
 
-function card (cardName, cardType) {
+function Utility() {
+
+    Utility.shuffle = function(arr) {
+        for (var i = arr.length - 1; i >= 0; i--) {
+            var j = Math.floor(Math.random() * i); 
+            var temp = arr[i]; 
+            arr[i] = arr[j]; 
+            arr[j] = temp; 
+        }
+    }
+
+    Utility.getObjectIndexFromID = function(arr, id) {
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i].id == id) 
+                return i; 
+        }
+        return -1; 
+    }
+
+    Utility.removeIndexWithID = function(arr, id) {
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i].id == id) 
+                arr.splice(i, 1); 
+        }
+        return;
+    }
+
+}
+
+new Utility; 
+
+function Card (cardName, cardType, attributes) {
     this.id = newID(); 
     this.cardName = cardName; 
     this.cardType = cardType; 
+    this.attributes = attributes; 
 }
 
-function propertySet(color) {
+function PropertySet(color) {
     this.id = newID(); 
     this.color = color; 
     this.properties = []; 
@@ -41,16 +73,16 @@ function propertySet(color) {
     }
 }
 
-function deck(game) {
+function Deck(game) {
 
     this.deck = []; 
 
     this.initialize = function() {
-        let cardStats = game.cardStats.getCardStats; 
-        for (let cardType in cardStats) {
-            for (let cardName in cardGroup) {
-                for (let i = 0; i < cardName["count"]; i++) {
-                    deck.push(new card(cardName, cardType)); 
+        let cardStats = game.cardStats.getCardStats(); 
+        for (let [cardType, value] of Object.entries(cardStats)) {
+            for (let [cardName, attributes] of Object.entries(value)) {
+                for (let i = 0; i < attributes.count; i++) {
+                    this.deck.push(new Card(cardName, cardType, attributes)); 
                 }
             }
         }
@@ -59,12 +91,11 @@ function deck(game) {
 
     this.getNextCard = function () {
         let card = this.deck.pop();
-        this.graveYard.push(card);
         return card; 
     }; 
 
     this.shuffleDeck = function () {
-        utility.shuffle(this.deck); 
+        Utility.shuffle(this.deck); 
     }; 
 
     this.initialize(); 
@@ -94,35 +125,9 @@ const propertyColors = {
 };
 
 
-function utility() {
-    function shuffle(arr) {
-        for (var i = arr.length - 1; i >= 0; i--) {
-            var j = Math.floor(Math.random() * i); 
-            var temp = arr[i]; 
-            arr[i] = arr[j]; 
-            arr[j] = temp; 
-        }
-    }
 
-    function getObjectIndexFromID(arr, id) {
-        for (let i = 0; i < arr.length; i++) {
-            if (arr[i].id == id) 
-                return i; 
-        }
-        return -1; 
-    }
 
-    function removeIndexWithID(arr, id) {
-        for (let i = 0; i < arr.length; i++) {
-            if (arr[i].id == id) 
-                arr.splice(i, 1); 
-        }
-        return;
-    }
-
-}
-
-function cardStats() {
+function CardStats() {
     this.cardStats = {
         "actionCards" : {
             "dealBreaker" : {"count" : 2, "value" : 5},
@@ -196,14 +201,14 @@ function cardStats() {
     this.getCardStats = function() {
         return this.cardStats; 
     }
-    this.getCardAttributes = function(card, attribute) {
+    this.getCardAttribute = function(card, attribute) {
         return this.cardStats[card.cardType][card.cardName][attribute];
     }
 }
 
-function game() {
+function Game() {
 
-    let games = {}; 
+    Game.games = {}; 
 
     this.id = newID();
     this.status = gameStatus.IN_LOBBY;
@@ -211,18 +216,28 @@ function game() {
     this.turn = null; 
     this.turnStatus = null;
     this.deck = null; 
-    this.numOfCardsPerTurn = 2;
-    this.cardStats = new cardStats(); 
+    this.cardStats = new CardStats(); 
 
-    function getGame(id) {
+    games[this.id] = this;  
+
+    Game.getGame = function(id) {
         return games[id]; 
     }
 
+    this.getPublicGameInfo = function() {
+        return {
+            id : this.id,
+            status : this.status, 
+            turn : this.turn, 
+            turnStatus : this.turnStatus, 
+            numberOfCardsPerTurn : this.numberOfCardsPerTurn, 
+            cardStats : this.cardStats, 
+        } 
+    }
+
     this.dealCards = function() {
-        for (let i = 0; i < 5; i++) {
-            for (let j = 0; j < this.players.length; j++) {
-                this.players[j].drawCards(1); 
-            }
+        for (let j = 0; j < this.players.length; j++) {
+            this.players[j].socket.emit("dealCards", this.players[j].drawCards(5)); 
         }
     }
 
@@ -233,13 +248,14 @@ function game() {
                 playerInfo.push(this.players[i].getPublicPlayerInfo()); 
         }
         playerInfo.push(player.getPrivatePlayerInfo());
+        return playerInfo; 
     }
 
-    this.startGame = function(io) {
+    this.startGame = function() {
         this.turn = Math.floor(Math.random() * this.players.length); 
         this.status = gameStatus.IN_GAME; 
-        this.deck = new deck(); 
-        let res = {"turn" : this.players[turn].id}
+        this.deck = new Deck(this); 
+        let res = {"turn" : this.players[this.turn].id}
         io.to(this.id).emit("startGame", res);
         this.dealCards(); 
     }
@@ -250,9 +266,9 @@ function game() {
 
 }
 
-function player(socket, game) {
+function Player(socket, game) {
 
-    let players = {}; 
+    Player.players = {}; 
 
     this.id = socket.id; 
     this.socket = socket; 
@@ -267,7 +283,9 @@ function player(socket, game) {
     this.propertySets = []; 
     this.movesRemaining = 0; 
 
-    function getPlayer(id) {
+    players[this.id] = this; 
+
+     Player.getPlayer = function(id) {
         return players[id]; 
     }
 
@@ -277,12 +295,23 @@ function player(socket, game) {
     }
 
     this.getPrivatePlayerInfo = function() {
-        return this; 
+        return {
+            id : this.id,
+            gameID : this.gameID,  
+            banner : this.banner, 
+            cardsInHand : this.cardsInHand, 
+            numCardsInHand : this.numCardsInHand, 
+            moneyPile : this.moneyPile, 
+            topOfMoneyPile : this.topOfMoneyPile,
+            totalMoneyPile : this.totalMoneyPile,
+            propertySets : this.propertySets,
+            movesRemaining : this.movesRemaining,             
+        }; 
     }
 
     this.getPublicPlayerInfo = function() {
         return {
-            playerID : this.playerID, 
+            id : this.id, 
             banner : this.banner,
             numCardsInHand : this.numCardsInHand, 
             totalMoneyPile : this.totalMoneyPile,
@@ -300,42 +329,44 @@ function player(socket, game) {
             this.cardsInHand.push(card); 
             this.numCardsInHand++; 
         }
-        this.socket.to(this.gameID).emit("playerDrawCard", {count : numOfCards});
         return cards; 
     }
 
     this.addToMoneyPile = function(card) {
-        utility.removeIndexWithID(this.cardsInHand, card.id);
+        Utility.removeIndexWithID(this.cardsInHand, card.id);
         this.movesRemaining--; 
         this.moneyPile.push(card); 
         this.topOfMoneyPile = card;
-        this.totalMoneyPile+=this.game.getCardStats.getCardAttribute(card, "value");
-        this.socket.to(this.gameID).emit("addToMoneyPile", card); 
+        this.totalMoneyPile+=this.game.cardStats.getCardAttribute(card, "value");
+        this.socket.to(this.gameID).emit("opponentAddToMoneyPile", card); 
         return this.getPrivatePlayerInfo();
     }
 
     this.placeActionCard = function(card) {
-        utility.removeIndexWithID(this.cardsInHand, card.id);
+        Utility.removeIndexWithID(this.cardsInHand, card.id);
         this.movesRemaining--; 
-        this.socket.to(this.gameID).emit("placeActionCard", card); 
+        this.socket.to(this.gameID).emit("opponentPlaceActionCard", card); 
         return this.getPrivatePlayerInfo(); 
     }
 
     this.placePropertyCard = function(card, propertySet, color) {
-        utility.removeIndexWithID(this.cardsInHand, card.id);
+        Utility.removeIndexWithID(this.cardsInHand, card.id);
         this.movesRemaining--; 
         if (propertySet == -1) {
-            propertySet = new propertySet(color);
+            propertySet = new PropertySet(color);
         }
         propertySet.addProperty(card); 
-        this.socket.to(this.gameID).emit("placePropertyCard", {"propertySet" : propertySet, "card" : card}); 
+        this.socket.to(this.gameID).emit("opponentPlacePropertyCard", {
+            "propertySet" : propertySet, 
+            "card" : card
+        }); 
         return propertySet; 
     }
 
     this.movePropertyCard = function(card, sourcePropertySet, destinationPropertySet) {
         sourcePropertySet.removeProperty(card); 
         destinationPropertySet.addProperty(card); 
-        this.socket.to(this.gameID).emit("movePropertyCard", {
+        this.socket.to(this.gameID).emit("oppponentMovePropertyCard", {
             "sourcePropertySet" : sourcePropertySet, 
             "destinationPropertySet" : destinationPropertySet, 
             "card" : card
@@ -344,11 +375,13 @@ function player(socket, game) {
     }
 
     this.getCard = function(id) {
-        return utility.getObjectIndexFromID(this.cardsInHand, id); 
+        let cardIndex = Utility.getObjectIndexFromID(this.cardsInHand, id)
+        return this.cardsInHand[cardIndex]; 
     }
 
     this.getPropertySet = function(id) {
-        return utility.getObjectIndexFromID(this.propertySets, id);
+        let propertySetIndex = Utility.getObjectIndexFromID(this.propertySets, id)
+        return this.propertySets[propertySetIndex];
     }
 
     this.initialize(); 
@@ -360,17 +393,17 @@ io.on("connection", (socket) => {
     let player; 
 
     socket.on("enterLobbyAsLeader", (msg, fn) => {
-        let game = new game();  
-        player = new player(socket, game);   
-        fn({player});
+        let game = new Game();  
+        player = new Player(socket, game);   
+        fn({"game" : game.getPublicGameInfo(), "players" : player.getPrivatePlayerInfo()});
     });
 
     socket.on("enterLobbyAsPleb", (msg, fn) => {
         let gameID = msg; 
-        let game = game.getGame(gameID);
-        player = new player(socket, game); 
+        let game = Game.getGame(gameID);
+        player = new Player(socket, game); 
         socket.to(gameID).emit("addPlayer", player.getPublicPlayerInfo());
-        fn(game.getPlayerData(player)); 
+        fn({"game" : game.getPublicGameInfo(), "players" : game.getPlayerData(player)}); 
     });
 
     socket.on("startGame", (msg, fn) => {
@@ -378,7 +411,8 @@ io.on("connection", (socket) => {
     });
 
     socket.on("drawCards", (msg, fn) => { 
-        fn(player.drawCards(player.game.numOfCardsPerTurn));
+        socket.to(gameID).emit("opponentDrawCards", player.id); 
+        fn(player.drawCards(2));
     });
 
     socket.on("addToMoneyPile", (msg, fn) => {
@@ -393,7 +427,7 @@ io.on("connection", (socket) => {
 
     socket.on("placePropertyCard", (msg, fn) => {
         let card = player.getCard(msg["card_id"]); 
-        let propertySet = player.msg["propertySet_id"];
+        let propertySet = player.getPropertySet(player.msg["propertySet_id"]);
         fn(player.placePropertyCard(card, propertySet)); 
     });
 
@@ -409,7 +443,7 @@ io.on("connection", (socket) => {
     }); 
 
     socket.on("disconnect", function() {
-        player.game.cleanup(player); 
+        
     });
 
 });

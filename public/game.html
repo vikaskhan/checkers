@@ -30,13 +30,7 @@
     document.getElementsByClassName('debug_text')[0].onkeydown = function(event) {
         if (event.keyCode == 13) {
             var val = document.getElementsByClassName("debug_text")[0].value;
-            if (val == "draw") {
-                drawCards(); 
-            }
-            if (val.includes("move")) {
-                makeMove(val); 
-            }
-            
+            makeMove(val); 
         }
         
     }
