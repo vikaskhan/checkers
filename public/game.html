@@ -20,6 +20,12 @@
     </div>
     <div class="game">
         <input type="text" class="debug_text" id="debug_text">
+        <button onclick="endTurn()">End Turn</button>
+        <button onclick="drawCards()">Draw Cards</button>
+        <ul class="cards">
+        </ul>
+        <ul class="properties">
+        </ul>
     </div>
 </body>
 <script type="text/javascript" src="behavior.js"></script>
@@ -31,6 +37,7 @@
         if (event.keyCode == 13) {
             var val = document.getElementsByClassName("debug_text")[0].value;
             makeMove(val); 
+            document.getElementsByClassName("debug_text")[0].value = "";
         }
         
     }

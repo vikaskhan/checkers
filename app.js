@@ -339,14 +339,22 @@ function Player(socket, game) {
         this.topOfMoneyPile = card;
         this.totalMoneyPile+=this.game.cardStats.getCardAttribute(card, "value");
         this.socket.to(this.gameID).emit("opponentAddToMoneyPile", card); 
-        return this.getPrivatePlayerInfo();
+        console.log(this.totalMoneyPile); 
+        return {
+            "movesRemaining" : this.movesRemaining,
+            "moneyPile" : this.moneyPile, 
+            "topOfMoneyPile" : this.topOfMoneyPile, 
+            "totalMoneyPile" : this.totalMoneyPile, 
+        };
     }
 
     this.placeActionCard = function(card) {
         Utility.removeIndexWithID(this.cardsInHand, card.id);
         this.movesRemaining--; 
         this.socket.to(this.gameID).emit("opponentPlaceActionCard", card); 
-        return this.getPrivatePlayerInfo(); 
+        return {
+            "movesRemaining" : this.movesRemaining,
+        };
     }
 
     this.placePropertyCard = function(card, propertySet, color) {
@@ -354,33 +362,43 @@ function Player(socket, game) {
         this.movesRemaining--; 
         if (propertySet == -1) {
             propertySet = new PropertySet(color);
+            this.propertySets.push(propertySet); 
         }
         propertySet.addProperty(card); 
-        this.socket.to(this.gameID).emit("opponentPlacePropertyCard", {
+        let res = {
             "propertySet" : propertySet, 
             "card" : card
-        }); 
-        return propertySet; 
+        }
+        this.socket.to(this.gameID).emit("opponentPlacePropertyCard", res); 
+        return res; 
     }
 
-    this.movePropertyCard = function(card, sourcePropertySet, destinationPropertySet) {
+    this.movePropertyCard = function(card, sourcePropertySet, destinationPropertySet, color) {
         sourcePropertySet.removeProperty(card); 
+        if (destinationPropertySet == -1) {
+            destinationPropertySet = new PropertySet(color); 
+        } 
         destinationPropertySet.addProperty(card); 
-        this.socket.to(this.gameID).emit("oppponentMovePropertyCard", {
+        let res = {
             "sourcePropertySet" : sourcePropertySet, 
             "destinationPropertySet" : destinationPropertySet, 
             "card" : card
-        }); 
-        return; 
+        }
+        this.socket.to(this.gameID).emit("oppponentMovePropertyCard", res); 
+        return res; 
     }
 
     this.getCard = function(id) {
         let cardIndex = Utility.getObjectIndexFromID(this.cardsInHand, id)
+        if (cardIndex == -1) 
+            return -1; 
         return this.cardsInHand[cardIndex]; 
     }
 
     this.getPropertySet = function(id) {
         let propertySetIndex = Utility.getObjectIndexFromID(this.propertySets, id)
+        if (propertySetIndex == -1) 
+            return -1; 
         return this.propertySets[propertySetIndex];
     }
 
@@ -411,7 +429,8 @@ io.on("connection", (socket) => {
     });
 
     socket.on("drawCards", (msg, fn) => { 
-        socket.to(gameID).emit("opponentDrawCards", player.id); 
+        let game = player.game; 
+        socket.to(game.id).emit("opponentDrawCards", player.id); 
         fn(player.drawCards(2));
     });
 
@@ -427,8 +446,9 @@ io.on("connection", (socket) => {
 
     socket.on("placePropertyCard", (msg, fn) => {
         let card = player.getCard(msg["card_id"]); 
-        let propertySet = player.getPropertySet(player.msg["propertySet_id"]);
-        fn(player.placePropertyCard(card, propertySet)); 
+        let propertySet = player.getPropertySet(msg["propertySet_id"]);
+        let color = msg["color"]; 
+        fn(player.placePropertyCard(card, propertySet, color)); 
     });
 
     socket.on("movePropertyCard", (msg, fn) => {
@@ -439,11 +459,7 @@ io.on("connection", (socket) => {
     });
 
     socket.on("endTurn", (msg) => {
-
-    }); 
-
-    socket.on("disconnect", function() {
         
-    });
+    }); 
 
 });
