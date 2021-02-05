@@ -11,34 +11,27 @@
 </head>
 <body>
     <div class="start_screen">
-        <button onclick="enterLobbyAsLeader()">Create New Lobby</button>
+        <button class="enterLobbyButton">Create New Lobby</button>
     </div>
     <div class="lobby">
         <input type="text" readonly="true" class="game_link" id="game_link">
-        <button onclick="copyID()">Copy text</button>
-        <button class="startGameButton" disabled="true" onclick="startGame()">Start Game</button>
+        <button class="copy">Copy text</button>
+        <button class="startGameButton" disabled="true">Start Game</button>
     </div>
     <div class="game">
         <input type="text" class="debug_text" id="debug_text">
-        <button onclick="endTurn()">End Turn</button>
-        <button onclick="drawCards()">Draw Cards</button>
+        <button class="endTurn">End Turn</button>
+        <button class="drawCards">Draw Cards</button>
         <ul class="cards">
         </ul>
         <ul class="properties">
         </ul>
+        <p class="totalMoney"></p>
+        <p class="money"></p>
+        <p class="opponent"></p>
+        <p class="options"></p>
     </div>
 </body>
-<script type="text/javascript" src="behavior.js"></script>
+<script type="module" src="behavior.js"></script>
 </html>
 
-
-<script>
-    document.getElementsByClassName('debug_text')[0].onkeydown = function(event) {
-        if (event.keyCode == 13) {
-            var val = document.getElementsByClassName("debug_text")[0].value;
-            makeMove(val); 
-            document.getElementsByClassName("debug_text")[0].value = "";
-        }
-        
-    }
-</script>

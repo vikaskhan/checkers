@@ -1,5 +1,9 @@
-const { timingSafeEqual } = require('crypto');
+//const { timingSafeEqual } = require('crypto');
 var express = require('express'); 
+const { game } = require('./public/behavior');
+//const { game } = require('./public/behavior');
+//const { opponents } = require('./public/behavior');
+//const { default: utility } = require('./public/utility');
 var app = express(); 
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
@@ -50,11 +54,13 @@ function Utility() {
 
 new Utility; 
 
-function Card (cardName, cardType, attributes) {
+function Card (cardName, cardType) {
     this.id = newID(); 
     this.cardName = cardName; 
     this.cardType = cardType; 
-    this.attributes = attributes; 
+
+    
+
 }
 
 function PropertySet(color) {
@@ -82,7 +88,7 @@ function Deck(game) {
         for (let [cardType, value] of Object.entries(cardStats)) {
             for (let [cardName, attributes] of Object.entries(value)) {
                 for (let i = 0; i < attributes.count; i++) {
-                    this.deck.push(new Card(cardName, cardType, attributes)); 
+                    this.deck.push(new Card(cardName, cardType)); 
                 }
             }
         }
@@ -111,38 +117,36 @@ const turnStatus = {
     DRAWING_CARDS : "drawingCards", 
 }
 
-const propertyColors = {
-    "brown" : {"value" : 1, "fullSet" : 2}, 
-    "darkBlue" : {"value" : 4, "fullSet" : 2}, 
-    "green" : {"value" : 4, "fullSet" : 3}, 
-    "lightBlue" : {"value" : 1, "fullSet" : 3}, 
-    "orange" : {"value" : 2, "fullSet" : 3}, 
-    "purple" : {"value" : 2, "fullSet" : 3}, 
-    "railroad" : {"value" : 2, "fullSet" : 4}, 
-    "red" : {"value" : 3, "fullSet" : 3}, 
-    "utility" : {"value" : 2, "fullSet" : 2}, 
-    "yellow" : {"value" : 3, "fullSet" : 3},
-};
-
-
-
 
 function CardStats() {
+    this.propertyColors = {
+        "brown" : {"value" : 1, "rent" : [1,2], "fullSet" : 2}, 
+        "darkBlue" : {"value" : 4, "rent" : [3,8], "fullSet" : 2}, 
+        "green" : {"value" : 4, "rent" : [2,4,7], "fullSet" : 3}, 
+        "lightBlue" : {"value" : 1, "rent" : [1,2,3], "fullSet" : 3}, 
+        "orange" : {"value" : 2, "rent" : [1,3,5], "fullSet" : 3}, 
+        "purple" : {"value" : 2, "rent" : [1,2,4], "fullSet" : 3}, 
+        "railroad" : {"value" : 2, "rent" : [1,2,3,4], "fullSet" : 4}, 
+        "red" : {"value" : 3, "rent" : [2,3,6], "fullSet" : 3}, 
+        "utility" : {"value" : 2, "rent" : [1,2], "fullSet" : 2}, 
+        "yellow" : {"value" : 3, "rent" : [2,4,6], "fullSet" : 3},
+    };
+
     this.cardStats = {
         "actionCards" : {
-            "dealBreaker" : {"count" : 2, "value" : 5},
+            "dealBreaker" : {"count" : 10, "value" : 5, "sequence" : "twoStep"},
             "justSayNo" : {"count" : 3, "value" : 4},
-            "slyDeal" : {"count" : 3, "value" : 3},
-            "forceDeal" : {"count" : 4, "value" : 3}, 
-            "debtCollector" : {"count" : 3, "value" : 3},
-            "itsMyBirthday" : {"count" : 3, "value" : 2},
-            "passGo" : {"count" : 10, "value" : 1},
+            "slyDeal" : {"count" : 3, "value" : 3, "sequence" : "twoStep"},
+            "forceDeal" : {"count" : 4, "value" : 3, "sequence" : "twoStep"}, 
+            "debtCollector" : {"count" : 10, "value" : 3, "sequence" : "twoStep"},
+            "itsMyBirthday" : {"count" : 3, "value" : 2, "sequence" : "oneStepResponse"},
+            "passGo" : {"count" : 10, "value" : 1, "sequence" : "oneStepNoResponse"},
             "house" : {"count" : 3, "value" : 3},
             "hotel" : {"count" : 3, "value" : 4},
             "doubleRent" : {"count" : 2, "value" : 1},
         },
         "propertyCards" : {
-            "balticAve" : {"count" : 1, "color" : "brown"},
+            "balticAve" : {"count" : 10, "color" : "brown"},
             "mediterraneanAve" : {"count" : 1, "color" : "brown"},
             "boardwalk" : {"count" : 1, "color" : "darkBlue"},
             "parkPlace" : {"count" : 1, "color" : "darkBlue"},
@@ -177,17 +181,17 @@ function CardStats() {
             "purpleAndOrange" : {"count" : 2, "value" : 2, "color1" : "purple", "color2" : "orange"},
             "railroadAndGreen" : {"count" : 1, "value" : 4, "color1" : "railroad", "color2" : "green"},
             "lightBlueAndRailroad" : {"count" : 1, "value" : 4, "color1" : "lightBlue", "color2" : "railroad"},
-            "utilityAndRailroad" : {"count" : 1, "value" : 2, "color1" : "utilty", "color2" : "railroad"},
+            "utilityAndRailroad" : {"count" : 1, "value" : 2, "color1" : "utility", "color2" : "railroad"},
             "redAndYellow" : {"count" : 2, "value" : 3, "color1" : "red", "color2" : "yellow"},
             "multi" : {"count" : 2, "value" : 0, "color1" : "any", "color2" : "any"}
         },
         "rentCards" : {
-            "greenAndDarkBlue" : {"count" : 2, "value" : 1, "color1" : "green", "color2" : "darkBlue"},
-            "brownAndLightBlue" : {"count" : 2, "value" : 1, "color1" : "brown", "color2" : "lightBlue"},
-            "purpleAndOrange" : {"count" : 2, "value" : 1, "color1" : "purple", "color2" : "orange"},
-            "railroadAndUtility" : {"count" : 2, "value" : 1, "color1" : "railroad", "color2" : "utility"}, 
-            "redAndYellow" : {"count" : 2, "value" : 1, "color1" : "red", "color2" : "yellow"},
-            "multi" : {"count" : 3, "value" : 3, "color1" : "any", "color2" : "any"},
+            "greenAndDarkBlue" : {"count" : 2, "value" : 1, "color1" : "green", "color2" : "darkBlue", "sequence" : "twoStep"},
+            "brownAndLightBlue" : {"count" : 2, "value" : 1, "color1" : "brown", "color2" : "lightBlue", "sequence" : "twoStep"},
+            "purpleAndOrange" : {"count" : 2, "value" : 1, "color1" : "purple", "color2" : "orange", "sequence" : "twoStep"},
+            "railroadAndUtility" : {"count" : 2, "value" : 1, "color1" : "railroad", "color2" : "utility", "sequence" : "twoStep"}, 
+            "redAndYellow" : {"count" : 2, "value" : 1, "color1" : "red", "color2" : "yellow", "sequence" : "twoStep"},
+            "multi" : {"count" : 3, "value" : 3, "color1" : "any", "color2" : "any", "sequence" : "twoStep"},
         },
         "moneyCards" : {
             "tenMil" : {"count" : 1, "value" : 10},
@@ -216,7 +220,7 @@ function Game() {
     this.turn = null; 
     this.turnStatus = null;
     this.deck = null; 
-    this.cardStats = new CardStats(); 
+    this.cardStats = new CardStats();
 
     games[this.id] = this;  
 
@@ -247,7 +251,6 @@ function Game() {
             if (player != this.players[i]) 
                 playerInfo.push(this.players[i].getPublicPlayerInfo()); 
         }
-        playerInfo.push(player.getPrivatePlayerInfo());
         return playerInfo; 
     }
 
@@ -262,6 +265,11 @@ function Game() {
 
     this.cleanup = function(player) {
         //Not Implemented
+    }
+
+    this.dealBreaker = function(msg) {
+        console.log("dealBreaker"); 
+        console.log(msg); 
     }
 
 }
@@ -285,7 +293,7 @@ function Player(socket, game) {
 
     players[this.id] = this; 
 
-     Player.getPlayer = function(id) {
+    Player.getPlayer = function(id) {
         return players[id]; 
     }
 
@@ -316,7 +324,7 @@ function Player(socket, game) {
             numCardsInHand : this.numCardsInHand, 
             totalMoneyPile : this.totalMoneyPile,
             topOfMoneyPile : this.topOfMoneyPile,
-            properties : this.properties,
+            propertySets : this.propertySets,
             movesLeft : this.movesLeft,
         }
     }
@@ -338,22 +346,18 @@ function Player(socket, game) {
         this.moneyPile.push(card); 
         this.topOfMoneyPile = card;
         this.totalMoneyPile+=this.game.cardStats.getCardAttribute(card, "value");
-        this.socket.to(this.gameID).emit("opponentAddToMoneyPile", card); 
+        this.socket.to(this.gameID).emit("opponentAddToMoneyPile", {
+            "opponent_id" : this.id,
+            "movesRemaining" : this.movesRemaining,
+            "topOfMoneyPile" : this.topOfMoneyPile, 
+            "totalMoneyPile" : this.totalMoneyPile, 
+        }); 
         console.log(this.totalMoneyPile); 
         return {
             "movesRemaining" : this.movesRemaining,
             "moneyPile" : this.moneyPile, 
             "topOfMoneyPile" : this.topOfMoneyPile, 
             "totalMoneyPile" : this.totalMoneyPile, 
-        };
-    }
-
-    this.placeActionCard = function(card) {
-        Utility.removeIndexWithID(this.cardsInHand, card.id);
-        this.movesRemaining--; 
-        this.socket.to(this.gameID).emit("opponentPlaceActionCard", card); 
-        return {
-            "movesRemaining" : this.movesRemaining,
         };
     }
 
@@ -365,12 +369,17 @@ function Player(socket, game) {
             this.propertySets.push(propertySet); 
         }
         propertySet.addProperty(card); 
-        let res = {
+        this.socket.to(this.gameID).emit("opponentPlacePropertyCard", {
+            "movesRemaining" : this.movesRemaining,
+            "opponent_id" : this.id, 
             "propertySet" : propertySet, 
             "card" : card
-        }
-        this.socket.to(this.gameID).emit("opponentPlacePropertyCard", res); 
-        return res; 
+        }); 
+        return {
+            "movesRemaining" : this.movesRemaining,
+            "propertySet" : propertySet, 
+            "card" : card
+        }; 
     }
 
     this.movePropertyCard = function(card, sourcePropertySet, destinationPropertySet, color) {
@@ -379,13 +388,19 @@ function Player(socket, game) {
             destinationPropertySet = new PropertySet(color); 
         } 
         destinationPropertySet.addProperty(card); 
-        let res = {
+        this.socket.to(this.gameID).emit("oppponentMovePropertyCard", {
+            "opponent_id" : this.id,
+            "movesRemaining" : this.movesRemaining,
             "sourcePropertySet" : sourcePropertySet, 
             "destinationPropertySet" : destinationPropertySet, 
             "card" : card
-        }
-        this.socket.to(this.gameID).emit("oppponentMovePropertyCard", res); 
-        return res; 
+        }); 
+        return {
+            "movesRemaining" : this.movesRemaining,
+            "sourcePropertySet" : sourcePropertySet, 
+            "destinationPropertySet" : destinationPropertySet, 
+            "card" : card 
+        }; 
     }
 
     this.getCard = function(id) {
@@ -413,7 +428,7 @@ io.on("connection", (socket) => {
     socket.on("enterLobbyAsLeader", (msg, fn) => {
         let game = new Game();  
         player = new Player(socket, game);   
-        fn({"game" : game.getPublicGameInfo(), "players" : player.getPrivatePlayerInfo()});
+        fn({"game" : game.getPublicGameInfo(), "player" : player.getPrivatePlayerInfo()});
     });
 
     socket.on("enterLobbyAsPleb", (msg, fn) => {
@@ -421,7 +436,7 @@ io.on("connection", (socket) => {
         let game = Game.getGame(gameID);
         player = new Player(socket, game); 
         socket.to(gameID).emit("addPlayer", player.getPublicPlayerInfo());
-        fn({"game" : game.getPublicGameInfo(), "players" : game.getPlayerData(player)}); 
+        fn({"game" : game.getPublicGameInfo(), "player" : player.getPrivatePlayerInfo(),  "opponents" : game.getPlayerData(player)}); 
     });
 
     socket.on("startGame", (msg, fn) => {
@@ -461,5 +476,39 @@ io.on("connection", (socket) => {
     socket.on("endTurn", (msg) => {
         
     }); 
+
+    socket.on("actionCardNotify", ({card_id}, fn) => {
+        let card = player.getCard(card_id); 
+        Utility.removeIndexWithID(player.cardsInHand, card_id); 
+        socket.to(player.gameID).emit("opponentActionCardNotify", {cardType : card.cardType, opponent_id : player.id});
+        fn(0); 
+    });
+
+    socket.on("playActionCard", ({card_id}) => {
+        let card = player.getCard(card_id);
+        if (card != -1)  {
+            Utility.removeIndexWithID(player.cardsInHand, card_id); 
+        }
+        msg.sPlayer_id = player.id; 
+        socket.to(player.gameID).emit("opponentActionCardPlay", (msg)); 
+    });
+
+    socket.on("respondToActionCard", (msg) => {
+        socket.to(player.gameID).emit("opponentActionCardResponse", (msg)); 
+    })
+
+    socket.on("actionCardForfeit", (msg) => {
+        socket.to(player.gameID).emit("opponentActionCardForfeit", (msg)); 
+    }); 
+
+    socket.on("justSayNo", ({card_id, cardName, receiver}) => {
+        Utility.removeIndexWithID(player.cardsInHand, card_id); 
+        socket.to(player.gameID).emit("justSayNo", {cardName, opponent_id : player.id, sender : player.id, receiver}); 
+    });
+
+
+
+
+
 
 });
