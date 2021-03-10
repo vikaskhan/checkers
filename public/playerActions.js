@@ -1,4 +1,5 @@
 import {socket, game, player, opponents} from './behavior.js'; 
+import viewManager from './viewManager.js';
 
 let playerActions = {
 
@@ -11,6 +12,7 @@ let playerActions = {
             for (let i = 0; i < cards.length; i++) {
                 player.cardsInHand.push(cards[i]); 
                 player.numCardsInHand++; 
+                viewManager.drawCard(cards[i]); 
             }
         }); 
     },

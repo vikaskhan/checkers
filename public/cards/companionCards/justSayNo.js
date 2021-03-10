@@ -1,5 +1,4 @@
-import {socket, game, player, opponents} from '../../behavior.js'; 
-import property from './property.js';
+
 
 let justSayNo = { 
 

@@ -1,6 +1,5 @@
 //const { timingSafeEqual } = require('crypto');
 var express = require('express'); 
-const { game } = require('./public/behavior');
 //const { game } = require('./public/behavior');
 //const { opponents } = require('./public/behavior');
 //const { default: utility } = require('./public/utility');
@@ -512,3 +511,14 @@ io.on("connection", (socket) => {
 
 
 });
+
+// const trianglify = require('trianglify')
+// const fs = require('fs')
+ 
+// const canvas = trianglify({
+//   width: 1920,
+//   height: 1080
+// }).toCanvas()
+ 
+// const file = fs.createWriteStream('trianglify.png')
+// canvas.createPNGStream().pipe(file)

@@ -7,9 +7,25 @@
     <script src="/socket.io/socket.io.js"></script>
     
     </script>
+    <script src='https://unpkg.com/trianglify@^4/dist/trianglify.bundle.js'></script>
     <link rel="stylesheet" href="styles.css">
+    
 </head>
 <body>
+    <script>
+        window.onload = setBackground;
+        function setBackground() {
+            let pattern = trianglify({
+                width: window.innerWidth,
+                height: window.innerHeight
+            })
+            let background = pattern.toCanvas();
+            background.classList.add("background");
+            document.body.appendChild(background);
+            document.querySelector(".background").style.width = "100%";
+            document.querySelector(".background").style.height = "100%";
+        }
+    </script>
     <div class="start_screen">
         <button class="enterLobbyButton">Create New Lobby</button>
     </div>
@@ -30,8 +46,14 @@
         <p class="money"></p>
         <p class="opponent"></p>
         <p class="options"></p>
+        <div class="player_hand"></div>
+        <img class="deck" src="./deck.png">
     </div>
+
 </body>
 <script type="module" src="behavior.js"></script>
+
 </html>
+
+
 

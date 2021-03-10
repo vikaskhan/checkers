@@ -11,7 +11,7 @@ import doubleRent from './cards/companionCards/doubleRent.js';
 import {socket, game, player, opponents} from './behavior.js'; 
 import viewManager from './viewManager.js';
 
-let actionCardManager = {
+let cardManager = {
     
     activeCard : "", 
     activeCardName : "", 
@@ -161,4 +161,4 @@ let actionCardManager = {
 
 }
 
-export default actionCardManager; 
+export default cardManager; 

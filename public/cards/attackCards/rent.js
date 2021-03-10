@@ -1,6 +1,5 @@
 import {socket, game, player, opponents} from '../../behavior.js'; 
 import doubleRent from '../companionCards/doubleRent.js'; 
-import property from '../property.js';
 
 let rent = {
     play : function(card) {

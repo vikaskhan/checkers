@@ -1,7 +1,5 @@
 import {socket, game, player, opponents} from '../behavior.js'; 
 import utility from '../utility.js';
-import property from './property.js';
-import actionCardManager from '../cardManager.js';
 import viewManager from '../viewManager.js';
 
 let passGo = {

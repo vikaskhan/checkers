@@ -23,6 +23,36 @@ let viewManager = {
 
     clearOptions : function() {
         document.querySelector(".options").innerHTML = ""; 
+    }, 
+
+    drawCard : function() {
+        let gameView = document.querySelector(".game"); 
+        let newCard = document.createElement("img"); 
+        newCard.src = "./testCard.png"; 
+        let player_hand = document.querySelector(".player_hand");
+        newCard.classList.add("transition");
+        gameView.appendChild(newCard); 
+
+        setTimeout(function() {
+            newCard.style.bottom = "0%";
+        }, 1000);
+        
+
+
+        // player_hand.appendChild(newCard);
+        // newCard.style.bottom = "50%"
+        //newCard.classList.add("cardInHand");
+        
+        
+        
+        
+        
+        
+        // // newCard.style.position = "fixed"; 
+        // // newCard.style.bottom = "50%"; 
+        // // newCard.style.left = "50%"; 
+        // 
+        // player_hand.appendChild(newCard); 
     }
 
 }

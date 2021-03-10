@@ -1,11 +1,6 @@
 import {socket, game, player, opponents, update } from './behavior.js'; 
 import utility from './utility.js';
 import actionCardManager from './cardManager.js'; 
-import playerActions from './playerActions.js';
-import justSayNo from './cards/companionCards/justSayNo.js';
-import dealBreaker from './cards/attackCards/dealBreaker.js';
-import debtCollector from './cards/attackCards/debtCollector.js';
-import forcedDeal from './cards/attackCards/forcedDeal.js';
 
 let intervalID; 
 
@@ -23,12 +18,179 @@ export default function socketReceiver() {
     })
     
     socket.on("dealCards", (cards) => {
+         
+        dealCards(cards); 
+        createPropertyStorage();
+    })
+
+    async function dealCards(cards) {
+
         player.cardsInHand = cards; 
         player.numCardsInHand = cards.length; 
-        console.log("I drew 5 cards: ");
-        for (let i = 0; i < cards.length; i++) 
-            console.log(cards[i]);  
-    })
+
+        let flipCards = []; 
+        let W = window.innerWidth; 
+        let H = window.innerHeight; 
+        let w = 50; 
+
+        let dummyElement = document.createElement("div")
+        dummyElement.classList.add("flip-card");
+        document.querySelector(".game").appendChild(dummyElement); 
+        let card_width = parseInt(getComputedStyle(dummyElement).width, 10); 
+        let card_height = parseInt(getComputedStyle(dummyElement).height, 10); 
+
+        for (let i = 0; i < player.cardsInHand.length; i++) {
+
+            let flipCard = createFlipCard("./deck.png", "./testCard.png");
+            document.querySelector(".player_hand").appendChild(flipCard); 
+
+            flipCard.style.bottom = (H/2)-(card_height/2) + "px"; 
+            flipCard.style.left = (W/2)-(card_width/2) + "px"; 
+            flipCards.push(flipCard);
+
+            await new Promise(r => setTimeout(r, 1000));
+
+            for (let j = 0; j < flipCards.length-1; j++) {
+                flipCards[j].style.left = parseInt(flipCards[j].style.left, 10) - w + "px"; 
+            }
+            flipCard.style.bottom = '5px'; 
+            let left = (W/2) - (w/2) + (w*flipCards.length) + "px";
+            flipCard.style.left = (W/2) - (w/2) + (w*(flipCards.length-1)) + "px";
+            flipCard.querySelector(".flip-card-inner").classList.add("flip-card-inner-flip");
+
+            flipCard.addEventListener('mousedown', downListener); 
+            flipCard.addEventListener('mousemove', moveListener); 
+            flipCard.addEventListener('mouseup', upListener); 
+            flipCard.addEventListener('mouseover', mouseOver);
+
+        }
+        let opponentsArr = Object.keys(opponents); 
+        for (let i = 0; i < opponentsArr.length; i++) {
+
+            let opponent_hand_div = document.createElement("div"); 
+            opponent_hand_div.id = "opponent_" + i + "_hand"; 
+            document.querySelector(".game").appendChild(opponent_hand_div); 
+
+            flipCards = []; 
+            for (let j = 0; j < player.cardsInHand.length; j++) {
+                let flipCard = createFlipCard("./deck.png", "./testCard.png");
+                
+                document.querySelector("#opponent_" + i + "_hand").appendChild(flipCard); 
+    
+                // flipCard.style.bottom = (H/2)-(card_height/2) + "px"; 
+                // flipCard.style.left = (W/2)-(card_width/2) + "px"; 
+                flipCard.style.bottom = "50%"; 
+                flipCard.style.left = "50%"; 
+                flipCards.push(flipCard);
+    
+                await new Promise(r => setTimeout(r, 1000));
+
+                if (i == 0) {
+                    for (let k = 0; k < flipCards.length-1; k++) {
+                        flipCards[k].style.left = parseInt(flipCards[k].style.left, 10) - w + "px"; 
+                    }
+                    flipCard.style.bottom = H - (140) - 5  + 'px'; 
+                    flipCard.style.left = (W/2) - (w/2) + (w*(flipCards.length-1)) + "px";
+                    flipCard.querySelector(".flip-card-inner").classList.add("flip-card-inner-rotate-counterclockwise-180");
+                }
+                if (i == 1) {
+                    for (let k = 0; k < flipCards.length-1; k++) {
+                        flipCards[k].style.bottom = parseInt(flipCards[k].style.bottom, 10) - w + "px"; 
+                    }
+                    flipCard.style.bottom = (H/2) - (w/2) + (w*(flipCards.length-1)) + "px"; 
+                    flipCard.style.left = (card_height/2) + 5 + 'px';
+                    flipCard.querySelector(".flip-card-inner").classList.add("flip-card-inner-rotate-clockwise-90");
+                }
+                if (i == 2) {
+                    for (let k = 0; k < flipCards.length-1; k++) {
+                        flipCards[k].style.bottom = parseInt(flipCards[k].style.bottom, 10) - w + "px"; 
+                    }
+                    flipCard.style.bottom = (H/2) - (w/2) + (w*(flipCards.length-1)) + "px"; 
+                    flipCard.style.left = W - card_height - 5 + 'px';
+                    flipCard.querySelector(".flip-card-inner").classList.add("flip-card-inner-rotate-counterclockwise-90");
+                }
+            }
+        }
+
+        
+        
+    }
+
+    function downListener() {
+        console.log("down"); 
+    }
+
+    function upListener() {
+        console.log("up"); 
+    }
+
+    function moveListener() {
+        console.log("move"); 
+    }
+
+    function mouseOver() {
+        console.log("hover"); 
+    }
+
+    function createFlipCard(frontImg, backImg) {
+
+        let flipCard = document.createElement("div"); 
+        flipCard.classList.add("flip-card"); 
+        flipCard.setAttribute("draggable", true);
+
+        let flipCardInner = document.createElement("div"); 
+        flipCardInner.classList.add("flip-card-inner"); 
+
+        let flipCardFront = document.createElement("div"); 
+        flipCardFront.classList.add("flip-card-front"); 
+
+        let flipCardFrontImg = document.createElement("img"); 
+        flipCardFrontImg.src = "./deck.png"; 
+        flipCardFrontImg.classList.add("cardImg"); 
+
+        flipCardFront.appendChild(flipCardFrontImg); 
+
+        let flipCardBack = document.createElement("div"); 
+        flipCardBack.classList.add("flip-card-back"); 
+
+        let flipCardBackImg = document.createElement("img"); 
+        flipCardBackImg.src = "./testCard.png"; 
+        flipCardBackImg.classList.add("cardImg"); 
+
+        flipCardBack.appendChild(flipCardBackImg); 
+
+        flipCardInner.appendChild(flipCardFront); 
+        flipCardInner.appendChild(flipCardBack); 
+        
+        flipCard.appendChild(flipCardInner);
+
+        return flipCard; 
+
+    }
+
+    function createPropertyStorage() {
+        let div = document.createElement("div"); 
+        div.id = "player-properties"; 
+        div.style.width = "300px"; 
+        div.style.height = "150px"; 
+        div.style.position = "fixed"; 
+        div.style.top = "60%"; 
+        div.style.left = "40%"; 
+        
+        let border_div = document.createElement("div"); 
+        border_div.classList.add("property-border"); 
+
+        div.appendChild(border_div); 
+
+        document.querySelector(".game").appendChild(div); 
+
+        let flipCard = document.querySelector(".flip-card"); 
+        flipCard.style.position = "absolute"; 
+        div.appendChild(flipCard); 
+        
+    }
+
+
     
     socket.on("addPlayer", (player) => {
         opponents[player.id] = player; 

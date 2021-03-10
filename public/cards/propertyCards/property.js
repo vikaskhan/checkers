@@ -1,5 +1,5 @@
-import {socket, game, player, opponents} from '../behavior.js'; 
-import utility from '../utility.js';
+import {socket, game, player, opponents} from '../../behavior.js'; 
+import utility from '../../utility.js';
 
 let property = {
     add : function(card, propertySet, color) {

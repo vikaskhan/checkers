@@ -1,6 +1,5 @@
 import {socket, game, player, opponents} from '../behavior.js'; 
 import utility from '../utility.js'; 
-import property from './property.js';
 
 let money = {
     add : function(card) {
